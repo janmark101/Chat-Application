@@ -21,13 +21,15 @@ class ConversationView(APIView):
     def post(self,request):
         serializer = ConversationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            conv = serializer.save()
+            Participant.objects.create(conversation_id=conv,user_id=request.user)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response(serializer.error,status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 class ConversationObject(APIView):
     authentication_classes=[TokenAuthentication]
     permission_classes=[ConversationPermissions,permissions.IsAuthenticated]
+    
     def get_obj(self,pk):
         try : 
             return Conversation.objects.get(pk=pk)
@@ -46,7 +48,7 @@ class ConversationObject(APIView):
         object = self.get_obj(pk)
         self.check_object_permissions(self.request,pk)
         object.delete()
-        return Response({"Message" : "Conversation succesfully deleted!"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"Message" : "Conversation succesfully deleted!"}, status=status.HTTP_204_NO_CONTENT)
     
     def patch(self,request,pk):
         obj = self.get_obj(pk)
@@ -102,7 +104,7 @@ class ParticipantsForConversation(APIView):
         obj = Participant.objects.get(conversation_id=pk,user_id=user_id)
         self.check_object_permissions(self.request,pk)  
         obj.delete()
-        return Response({"Message" : "Participant succesfully deleted!"}, status=status.HTTP_202_ACCEPTED)
+        return Response({"Message" : "Participant succesfully deleted!"}, status=status.HTTP_204_NO_CONTENT)
 
     
     
