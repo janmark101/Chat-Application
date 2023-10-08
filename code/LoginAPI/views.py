@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.authtoken.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -12,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 
 class LoginView(APIView):
     permission_classes = ()
+    
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -19,13 +19,13 @@ class LoginView(APIView):
         if username is None or password is None:
             return Response({'error': 'Please provide both username and password.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(username=username, password=password)
+        user = authenticate(request,username=username, password=password)
 
         if not user:
             return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key,'id':user.id})
+        return Response({'message':'Logged succesfully!','token': token.key,'id':user.id})
 
 
 class RegisterView(generics.CreateAPIView):
@@ -34,15 +34,14 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     
     
-class UpdateUser(generics.UpdateAPIView):
+class UpdateUser(generics.RetrieveUpdateAPIView):
     authentication_classes=[TokenAuthentication]
     permission_classes=[IsAuthenticated]
+    queryset = User.objects.all()
     serializer_class = UserSerializer
+    lookup_field = 'id'
     
-    def get_user(self):
-        user_pk = self.kwarg.get('id')
-        user = User.objects.get(pk=user_pk)
-        return user
+
     
     
 class LogoutView(APIView):
